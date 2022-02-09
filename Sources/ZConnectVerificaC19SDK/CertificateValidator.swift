@@ -28,6 +28,7 @@ public enum ScanMode {
     case scanMode2G
     case scanModeBooster
     case scanModeSchool
+    case scanModeWork
 }
 
 public class CertificateValidator {
@@ -43,6 +44,8 @@ public class CertificateValidator {
             Store.set(Constants.scanModeBooster, for: .scanMode)
         case .scanModeSchool:
             Store.set(Constants.scanModeSchool, for: .scanMode)
+        case .scanModeWork:
+            Store.set(Constants.scanMode50, for: .scanMode)
         }
     }
     
@@ -71,20 +74,32 @@ public class CertificateValidator {
             return
         }
         DispatchQueue.global(qos: .userInteractive).async {
-            let status = RulesValidator.getStatus(from: certificate.cert)
-            var resolvedStatus:Status = .notGreenPass
-            switch status {
-            case .valid:
-                resolvedStatus = .valid
-            case .notValid, .notValidYet, .revokedGreenPass:
-                resolvedStatus = .notValid
-            case .notGreenPass:
-                resolvedStatus = .notGreenPass
-            case .verificationIsNeeded:
-                resolvedStatus = .verificationIsNeeded
+            let savedScanMode: String = Store.get(key: .scanMode) ?? ""
+            if let mode = ScanModeInternal.init(rawValue: savedScanMode),
+               let hCert = certificate.cert,
+               let validator = DGCValidatorBuilder().scanMode(mode).build(hCert: hCert) {
+                
+                let status = validator.validate(hcert: hCert)
+            
+                var resolvedStatus: Status = .notGreenPass
+                switch status {
+                case .valid:
+                    resolvedStatus = .valid
+                case .notValid, .notValidYet, .revokedGreenPass:
+                    resolvedStatus = .notValid
+                case .notGreenPass:
+                    resolvedStatus = .notGreenPass
+                case .verificationIsNeeded:
+                    resolvedStatus = .verificationIsNeeded
+                }
+                DispatchQueue.main.async {
+                    onSuccessHandler(resolvedStatus)
+                }
             }
-            DispatchQueue.main.async {
-                onSuccessHandler(resolvedStatus)
+            else {
+                DispatchQueue.main.async {
+                    onSuccessHandler(.notGreenPass)
+                }
             }
         }
     }
