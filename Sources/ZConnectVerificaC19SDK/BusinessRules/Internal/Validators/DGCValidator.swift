@@ -41,46 +41,21 @@ protocol DGCValidator {
     func validate(hcert: HCert) -> Status
 }
 
-extension DGCValidator {
-    
-    func validate(_ current: Date, from validityStart: Date) -> Status {
-        switch current {
-        case ..<validityStart:
-            return .notValidYet
-        default:
-            return .valid
-        }
-    }
-    
-    func validate(_ current: Date, from validityStart: Date, to validityEnd: Date) -> Status {
-        switch current {
-        case ..<validityStart:
-            return .notValidYet
-        case validityStart...validityEnd:
-            return .valid
-        default:
-            return .expired
-        }
-    }
-    
-    func validate(_ current: Date, from validityStart: Date, to validityEnd: Date, extendedTo validityEndExtension: Date) -> Status {
-        switch current {
-        case ..<validityStart:
-            return .notValidYet
-        case validityStart...validityEnd:
-            return .valid
-        case validityEnd...validityEndExtension:
-            return .verificationIsNeeded
-        default:
-            return .expired
-        }
-    }
-        
-}
-
 class AlwaysNotValid: DGCValidator {
     
     func validate(hcert: HCert) -> Status {
+        return .notValid
+    }
+    
+    func validate(_ current: Date, from validityStart: Date) -> Status {
+        return .notValid
+    }
+    
+    func validate(_ current: Date, from validityStart: Date, to validityEnd: Date) -> Status {
+        return .notValid
+    }
+
+    func validate(_ current: Date, from validityStart: Date, to validityEnd: Date, extendedTo validityEndExtension: Date) -> Status {
         return .notValid
     }
 }
@@ -96,10 +71,6 @@ struct ValidatorProducer {
             return ReinforcedValidatorFactory()
         case .booster:
             return BoosterValidatorFactory()
-        case .school:
-            return SchoolValidatorFactory()
-        case .work:
-            return WorkValidatorFactory()
         case .italyEntry:
             return ItalyEntryValidatorFactory()
         }
@@ -163,47 +134,6 @@ struct BoosterValidatorFactory: DCGValidatorFactory {
             return TestBoosterValidator()
         case .vaccineExemption:
             return VaccineExemptionBoosterValidator()
-        }
-    }
-    
-}
-
-struct SchoolValidatorFactory: DCGValidatorFactory {
-    
-    func getValidator(hcert: HCert) -> DGCValidator? {
-		let isIT = hcert.countryCode == Constants.ItalyCountryCode
-		
-        switch hcert.extendedType {
-        case .unknown:
-            return UnknownValidator()
-        case .vaccine:
-			return isIT ? VaccineSchoolValidator() : VaccineSchoolValidatorNotItaly()
-        case .recovery:
-            return RecoverySchoolValidator()
-        case .test:
-            return TestSchoolValidator()
-        case .vaccineExemption:
-            return VaccineExemptionSchoolValidator()
-        }
-    }
-    
-}
-
-struct WorkValidatorFactory: DCGValidatorFactory {
-    
-    func getValidator(hcert: HCert) -> DGCValidator? {
-        let isIT = hcert.countryCode == Constants.ItalyCountryCode
-        switch hcert.extendedType {
-        case .unknown:
-            return UnknownValidator()
-        case .vaccine:
-            return isIT ? VaccineWorkValidator() : VaccineWorkValidatorNotIt()
-        case .recovery:
-            return RecoveryWorkValidator()
-        case .test:
-            return TestWorkValidator()
-        case .vaccineExemption:
-            return VaccineExemptionWorkValidator()
         }
     }
     

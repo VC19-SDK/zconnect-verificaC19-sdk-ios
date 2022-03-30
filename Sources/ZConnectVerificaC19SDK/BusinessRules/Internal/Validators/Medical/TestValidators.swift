@@ -26,7 +26,40 @@
 import Foundation
 import SwiftDGC
 
-class TestBaseValidator: DGCValidator {
+class TestConcreteValidator: DGCValidator {
+    
+    func validate(_ current: Date, from validityStart: Date) -> Status {
+        switch current {
+        case ..<validityStart:
+            return .notValidYet
+        default:
+            return .valid
+        }
+    }
+    
+    func validate(_ current: Date, from validityStart: Date, to validityEnd: Date) -> Status {
+        switch current {
+        case ..<validityStart:
+            return .notValidYet
+        case validityStart...validityEnd:
+            return .valid
+        default:
+            return .expired
+        }
+    }
+
+    func validate(_ current: Date, from validityStart: Date, to validityEnd: Date, extendedTo validityEndExtension: Date) -> Status {
+        switch current {
+        case ..<validityStart:
+            return .notValidYet
+        case validityStart...validityEnd:
+            return .valid
+        case validityEnd...validityEndExtension:
+            return .verificationIsNeeded
+        default:
+            return .expired
+        }
+    }
     
     fileprivate func isTestDateValid(_ hcert: HCert) -> Status {
         guard hcert.isKnownTestType else { return .notValid }
@@ -76,8 +109,9 @@ class TestBaseValidator: DGCValidator {
         let testValidityResults = [isTestNegative(hcert), isTestDateValid(hcert)]
         return testValidityResults.first(where: {$0 != .valid}) ?? .valid
     }
-    
 }
+
+class TestBaseValidator: TestConcreteValidator {}
 
 class TestReinforcedValidator: TestBaseValidator {
     
@@ -92,27 +126,9 @@ class TestReinforcedValidator: TestBaseValidator {
             return .notValid
         }
     }
+    
 }
 
 class TestBoosterValidator: TestReinforcedValidator {}
 
-class TestSchoolValidator: TestReinforcedValidator {}
-
-class TestWorkValidator: TestBaseValidator {
-    
-    override func validate(hcert: HCert) -> Status {
-        let result = super.validate(hcert: hcert)
-        guard result != .expired else { return .expired }
-        guard result != .notValidYet else { return .notValidYet }
-        guard !isOver50(hcert) else { return .notValid }
-        return result
-    }
-    
-    private func isOver50 (_ hcert: HCert) -> Bool {
-        guard let age = hcert.age else { return false }
-        return age >= 50
-    }
-    
-}
-
-class TestItalyEntryValidator: TestBaseValidator {}
+class TestItalyEntryValidator: TestConcreteValidator {}

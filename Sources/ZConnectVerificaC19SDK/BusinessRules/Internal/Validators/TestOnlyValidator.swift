@@ -14,25 +14,22 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
-*/
+ */
 
 //
-//  RevocationValidator.swift
+//  TestOnlyValidator.swift
 //  Verifier
 //
-//  Created by Ludovico Girolimini on 01/02/22.
+//  Created by Johnny Bueti on 28/02/22.
 //
 
 import Foundation
 import SwiftDGC
 
-struct RevocationValidator: DGCValidator {
+struct TestOnlyValidator: DGCValidator {
     
-    func validate(hcert: HCert) -> Status {
-        guard CRLSynchronizationManager.shared.isSyncEnabled else { return .valid }
-        let hash = hcert.getUVCI().sha256()
-        guard !hash.isEmpty else { return .valid }
-        return CRLDataStorage.contains(hash: hash) ? .notValid : .valid
+    func validate(hcert: HCert) -> Status {        
+        return TestBaseValidator().validate(hcert: hcert)
     }
     
     func validate(_ current: Date, from validityStart: Date) -> Status {
