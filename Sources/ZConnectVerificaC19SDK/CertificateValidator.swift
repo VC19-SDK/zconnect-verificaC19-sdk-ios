@@ -39,7 +39,7 @@ public class CertificateValidator {
         self.certificate = certificate
     }
     
-    public func validate(scanMode: ScanMode, onSuccessHandler: @escaping (Status) -> Void, onFailureHandler: ((Error) -> Void)? = nil) {
+    public func validate(scanMode: ScanMode = .scanModeBase, onSuccessHandler: @escaping (Status) -> Void, onFailureHandler: ((Error) -> Void)? = nil) {
         guard let certificate = certificate else {
             onFailureHandler?(InvalidCertificateError())
             return
@@ -99,6 +99,6 @@ extension CertificateValidator {
     
     @available(*, deprecated, message: "Use setScanMode function instead")
     public static func setScanMode2GActive(_ scanMode2GActive: Bool) {
-        setScanMode(.scanModeReinforced)
+        setScanMode(.scanModeBase)
     }
 }
